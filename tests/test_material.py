@@ -9,10 +9,6 @@ add_pkg.add_pkg()
 from silicon_app.material import AnisotropicProperty, build_anisotropy_tensor_4_cubic_crystal
 
 class Material(unittest.TestCase):
-
-    def test_main_axes(self):
-        mat= AnisotropicProperty(np.ones((6,6)))
-        np.testing.assert_almost_equal(mat.main_axes, np.array([[1, 0, 0],[0, 1, 0],[0, 0, 1]]))
     def test_tensors(self):
         tensor=np.array(
             [
@@ -24,7 +20,7 @@ class Material(unittest.TestCase):
                 [61, 62, 63, 64, 65, 66]
             ]
         )
-        mat= AnisotropicProperty(tensor)
+        mat= AnisotropicProperty('test_prop', tensor)
         np.testing.assert_almost_equal(tensor, mat.tensor)
         np.testing.assert_almost_equal(tensor[1,1], mat.c11)
         np.testing.assert_almost_equal(tensor[1,2], mat.c12)
@@ -36,7 +32,9 @@ class Material(unittest.TestCase):
             ]
         )
         with self.assertRaises(TypeError):
-            mat= AnisotropicProperty(tensor)
+            mat= AnisotropicProperty('test_prop', tensor)
+
+
     def test_build_anisotropy_tensor_4_cubic_crystal(self):
 
         c11= 11
