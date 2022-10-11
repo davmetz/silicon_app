@@ -6,7 +6,8 @@ from PyQt5 import QtCore, QtGui
 from PyQt5.QtWidgets import QApplication,QMainWindow
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
-from silicon_app.eulerangle import MAIN_COORDINATE_SYSTEM, build_coordinate_system, plot_coordinatesystem
+import numpy as np
+from silicon_app.eulerangle import MAIN_COORDINATE_SYSTEM, build_coordinate_system, eulerianAngle, plot_coordinatesystem
 
 from silicon_app.utils.canvas import CanvasLayout, Plotter
 from silicon_app.utils.input_gui import convert2vector
@@ -47,6 +48,8 @@ class UiBackEnd(QMainWindow):
     def _connect_actions(self):
         self.ui.action_exit.triggered.connect(self.close)
         self.ui.pB_compute.clicked.connect(self.compute)
+        self.ui.rB_deg.clicked.connect(self.convert_angle)
+        self.ui.rB_rad.clicked.connect(self.convert_angle)
     
     def compute(self):
         x= convert2vector(self.ui.uvw.text())
@@ -55,8 +58,19 @@ class UiBackEnd(QMainWindow):
         ax = plt.figure().add_subplot(projection='3d')
         plot_coordinatesystem(ax, MAIN_COORDINATE_SYSTEM)
         plot_coordinatesystem(ax, cs, label= 'cs', color='r')
+        abc, N= eulerianAngle(MAIN_COORDINATE_SYSTEM, cs)
+        self.update_abc(abc)
+        print('before plstschow')
         plt.show()
+    def update_abc(self, abc)->None:
+        self.abc= {'rad':abc, 'deg': abc*180/np.pi}
+        self.convert_angle()
 
+    def convert_angle(self)->None:
+        unit = 'rad' if self.ui.rB_rad.isChecked() else 'deg'
+        self.ui.dSB_alpha.setValue(self.abc[unit][0])
+        self.ui.dSB_beta.setValue(self.abc[unit][1])
+        self.ui.dSB_gamma.setValue(self.abc[unit][2])
 
 def run():
     
@@ -64,7 +78,7 @@ def run():
     os.environ["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
-    app.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
+    # app.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling)
     # TODO test icon dipslay on win
     app.setWindowIcon(QtGui.QIcon(":/icons/icons/EIT.png"))
     ui = UiBackEnd()

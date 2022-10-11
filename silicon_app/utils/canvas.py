@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import logging
-from typing import Any, Callable
+from typing import Any, Callable, Protocol
+from matplotlib.axes import Axes
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT
 import matplotlib.pyplot
 from PyQt5.QtWidgets import QVBoxLayout
@@ -8,6 +9,9 @@ from matplotlib.figure import Figure
 
 logger = logging.getLogger(__name__)
 
+class Plot(Protocol):
+    def plot(self, ax:Axes) -> Axes:
+        ...
 
 class Plotter(ABC):
 
@@ -34,13 +38,10 @@ class Plotter(ABC):
             fig (matplotlib.pyplot.Figure): figure were to plot
             data (Data2Plot): data to plot
         """
-
         if not isinstance(fig, Figure):
             return
-
         if not isinstance(data, self._allowed_data_type):
             return
-
         fig.clear()  # clear figure
 
         self._build(fig, data, labels)
