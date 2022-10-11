@@ -92,6 +92,40 @@ def angle_btw_vectors(u:np.ndarray, v:np.ndarray)->float:
     # return np.arccos(np.dot(u, v)/(np.linalg.norm(u) * np.linalg.norm(v)))  
     return np.arccos(dot_product)
 
+def euler_angles_utils(new_base:CoordinateSystem, angle:np.ndarray)-> tuple[np.ndarray]:
+    """
+    _summary_
+
+    Args:
+        new_base (CoordinateSystem): _description_
+        angle (np.ndarray): _description_
+
+    Returns:
+        tuple[np.ndarray]: _description_
+    """
+    euler_angles, _= eulerianAngle(MAIN_COORDINATE_SYSTEM, new_base)
+    c = np.radians(angle) + euler_angles[2]
+    # print(f'{euler_angles=}')
+    #  cosines and sines from Eulerian angles
+    ca =  np.cos(euler_angles[0])
+    sa =  np.sin(euler_angles[0])
+    cb =  np.cos(euler_angles[1])
+    sb =  np.sin(euler_angles[1])
+    cc =  np.cos(c)
+    sc =  np.sin(c)
+    # print(ca, sa, cb, sb, cc, sc)
+
+    # compute l_i, m_i, n_i
+    l=[ca*cb*cc-sa*sc, -ca*cb*sc-sa*cc, ca*sb]
+    m=[sa*cb*cc+ca*sc, -sa*cb*sc+ca*cc, sa*sb]
+    n=[-sb*cc, sb*sc, cb]
+    # print(l[0].shape, m[0].shape, n[0].shape)
+    # print(l[1].shape, m[1].shape, n[1].shape)
+
+    lmn_const1= l[0]**2*m[0]**2+l[0]**2*n[0]**2+m[0]**2*n[1]**2
+    lmn_const2=l[0]**2*l[1]**2+m[0]**2*m[1]**2+n[0]**2*n[1]**2
+    return lmn_const1, lmn_const2
+
 def plot_coordinatesystem(ax:Axes, cs:CoordinateSystem, label: str = None, color:str ='k'):
     if label is None:
         labels = ['X', 'Y', 'Z']
@@ -118,10 +152,17 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     ax = plt.figure().add_subplot(projection='3d')
 
-    plot_coordinatesystem(ax, MAIN_COORDINATE_SYSTEM, labels= None, color='k')
-    plot_coordinatesystem(ax, base_b, labels= ['x_b','y_b','z_b'], color='r')
-    plot_coordinatesystem(ax, base_a, labels= ['x_b','y_b','z_b'], color='b')
-
-
-
+    plot_coordinatesystem(ax, MAIN_COORDINATE_SYSTEM, label= None, color='k')
+    plot_coordinatesystem(ax, base_b, label= 'b', color='r')
+    plot_coordinatesystem(ax, base_a, label= 'a', color='b')
     plt.show()
+    print(base_a.x.shape)
+    print(base_a.y.shape)
+    print(base_a.z.shape)
+    a, b= euler_angles_utils(base_a, np.arange(90))
+    print(a, a.shape)
+    print(b, b.shape)
+
+
+
+    

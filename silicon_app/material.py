@@ -2,14 +2,19 @@ from dataclasses import dataclass, field
 from matplotlib.animation import Animation
 import numpy as np
 
+from silicon_app.eulerangle import MAIN_COORDINATE_SYSTEM, CoordinateSystem, euler_angles_utils, eulerianAngle
+
 @dataclass
-class AnisotropicProperty:
+class Property:
+    name:str
+
+@dataclass
+class AnisotropicProperty(Property):
     """
     Contains the tensor describing an anisotropic property from a specific material
     """
-    name:str
     tensor:np.ndarray
-    main_axes:np.ndarray=field(default=np.array([[1, 0, 0],[0, 1, 0],[0, 0, 1]]), init=False)
+    main_base:np.ndarray=field(default=MAIN_COORDINATE_SYSTEM, init=False)
 
     def __post_init__(self):
         self._check_tensor()
@@ -27,6 +32,50 @@ class AnisotropicProperty:
     @property
     def c44(self)->float:
         return self.tensor[4,4]
+    
+
+@dataclass
+class AnisotropicElasticity(AnisotropicProperty):
+
+    def compute_EvG(self, new_base:CoordinateSystem, angle:np.ndarray)-> tuple[np.ndarray]:
+        """
+        Compute E_1, v_{12}, G_{12} in new_base (x:1, y:2, z:3), so in the plane XY for the angle starting +X
+
+
+        Args:
+            new_base (CoordinateSystem): _description_
+            angle (np.ndarray): _description_
+
+        Returns:
+            tuple[np.ndarray]: _description_
+        """
+        
+        # Compute E_1, v_{12}, G_{12} in new_base (x:1, y:2, z:3)
+        lmn_const1, lmn_const2 = euler_angles_utils(new_base, angle)
+
+        c= 2*((self.c11-self.c12)-self.c44/2)
+        print(f'{c=}')
+        print(f'{10**(-9)/(self.c11-c*lmn_const1)=}')
+        Emodul= 10**(-9)/(self.c11-c*lmn_const1) # in GPa
+        print(f'{-(2*self.c12+c*lmn_const2)=}')
+        print(f'{(2*self.c11-2*c*lmn_const1)=}')
+        v_ratio= -(2*self.c12+c*lmn_const2)/(2*self.c11-2*c*lmn_const1)
+        Gmodul= 10**(-9)/(self.c44+2*c*lmn_const2) # in GPa   
+
+        return Emodul, v_ratio, Gmodul
+
+@dataclass
+class AnisotropicPiezoresistivity(AnisotropicProperty):
+
+    
+    def compute_Pi(self, new_base:CoordinateSystem, angle:np.ndarray):
+        # Compute pi_L = pi_{11}, pi_T = pi_{12} in new_base (x:1, y:2, z:3)
+        lmn_const1, lmn_const2 = euler_angles_utils(new_base, angle)
+
+        s= self.c11-self.c12-self.c44
+        piL= (self.c11-2*s*lmn_const1) # in Pa^-1
+        piT= (self.c12+s)*lmn_const2 # in Pa^-1 
+        return piL, piT
 
 def build_anisotropy_tensor_4_cubic_crystal(c11:float, c12:float, c44:float)->np.ndarray:
     """Build the tensor describing an anisotropic property from a cubic crystal materials
