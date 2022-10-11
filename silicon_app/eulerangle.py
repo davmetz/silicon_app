@@ -1,12 +1,9 @@
 
 from dataclasses import dataclass
+from typing import Tuple
 from matplotlib.axes import Axes
 
 import numpy as np
-
-
-
-
 
 @dataclass
 class CoordinateSystem():
@@ -51,7 +48,7 @@ MAIN_COORDINATE_SYSTEM= CoordinateSystem([2,0,0],[0,2,0],[0,0,2])
 def build_coordinate_system(x:np.ndarray, z:np.ndarray)->CoordinateSystem:
     return CoordinateSystem(x, np.cross(z, x), z)
 
-def eulerianAngle(base_a:CoordinateSystem, base_b:CoordinateSystem)-> np.ndarray:
+def eulerianAngle(base_a:CoordinateSystem, base_b:CoordinateSystem)-> tuple[np.ndarray]:
     """
     Compute Eulerian angles $\alpha,\beta, \gamma$ noted a b c between the 
     bases $x_i$ noted x and $x_i'$  noted x_prime
@@ -64,20 +61,20 @@ def eulerianAngle(base_a:CoordinateSystem, base_b:CoordinateSystem)-> np.ndarray
         np.ndarray: three Eulerian angles abc = $[\alpha,\beta, \gamma]$
     """    
     # Compute Projection of b_z on the plane (a_x a_y) and vector N (line node direction)
-    projection_b_z= [
+
+    proj_bz_axy= [
         np.dot(base_b.z, base_a.x)/np.linalg.norm(base_a.x)**2,
         np.dot(base_b.z, base_a.y)/np.linalg.norm(base_a.y)**2,
         0
     ]
-    rotZ_90degree = [
+    rotZ_90deg = [
         [0, -1, 0],
         [1, 0, 0],
         [0, 0, 1]
-    ]# pi/2 rotation of projection_b_z on a_z (here only on Z global....TODO)
-    N = np.dot(projection_b_z,rotZ_90degree)
-    print(N)  
+    ]# pi/2 rotation of projection_b_z on a_z
+    N = np.dot(proj_bz_axy,rotZ_90deg) if np.linalg.norm(proj_bz_axy)>0 else base_a.y
     # Assignment of the basis vectors $x_i'$
-    abc = [angle_btw_vectors(N, base_a.y),angle_btw_vectors(base_b.z, base_a.z),angle_btw_vectors(base_b.y, N)]
+    abc = np.array([angle_btw_vectors(N, base_a.y),angle_btw_vectors(base_b.z, base_a.z),angle_btw_vectors(base_b.y, N)])
     return abc, N
 
 def angle_btw_vectors(u:np.ndarray, v:np.ndarray)->float:
